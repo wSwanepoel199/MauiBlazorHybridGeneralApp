@@ -64,10 +64,12 @@
     <ItemGroup>
       <None Remove="Components\Pages\TodoList.razor.css" />
       <None Remove="Components\Pages\TodoList.razor~RF14d90c2.TMP" />
+      <None Remove="Components\Pages\Weather.razor.css" />
     </ItemGroup>
 
     <ItemGroup>
       <Content Include="Components\Pages\TodoList.razor.css" />
+      <Content Include="Components\Pages\Weather.razor.css" />
     </ItemGroup>
 
     <ItemGroup>

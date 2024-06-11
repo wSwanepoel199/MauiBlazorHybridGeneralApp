@@ -4,43 +4,69 @@
 
 <p>This component demonstrates showing data.</p>
 
-@if (forecasts == null)
+@if (forecasts == null && _isCheckingLocation == true)
 {
     <p><em>Loading...</em></p>
 }
-else
+else 
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Temp. (C)</th>
-                <th>Temp. (F)</th>
-                <th>Summary</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var forecast in forecasts)
-            {
+    if (currLocation != null)
+    {
+        <p>
+            @currLocation
+        </p>
+    }
+    if (location != null)
+    {
+        <pre>
+            @(location)
+        </pre>
+    }
+    if (forecasts != null)
+    {
+        <table class="table">
+            <thead>
                 <tr>
-                    <td>@forecast.Date.ToShortDateString()</td>
-                    <td>@forecast.TemperatureC</td>
-                    <td>@forecast.TemperatureF</td>
-                    <td>@forecast.Summary</td>
+                    <th>Date</th>
+                    <th>Temp. (C)</th>
+                    <th>Temp. (F)</th>
+                    <th>Summary</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var forecast in forecasts)
+                {
+                    <tr>
+                        <td>@forecast.Date.ToShortDateString()</td>
+                        <td>@forecast.TemperatureC</td>
+                        <td>@forecast.TemperatureF</td>
+                        <td>@forecast.Summary</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 }
 
 @code {
     private WeatherForecast[]? forecasts;
+    private CancellationTokenSource? _cancelTokenSource;
+    private bool _isCheckingLocation;
+    private Location? currLocation;
+    static HttpClient client = new HttpClient();
+    private string? location;
 
     protected override async Task OnInitializedAsync()
     {
         // Simulate asynchronous loading to demonstrate a loading indicator
+        await GetCachedLocation();
+        if (currLocation != null)
+        {
+            HttpResponseMessage response = await client.GetAsync($"http://api.weatherapi.com/v1/forecast.json?key=8aee07ed794b48a5bf813829241106&q={currLocation.Latitude},{currLocation.Longitude}&days=5");
+            location = await response.Content.ReadAsStringAsync();
+            Debug.Write(location);
+        }
         await Task.Delay(500);
-
         var startDate = DateOnly.FromDateTime(DateTime.Now);
         var summaries = new[] { "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching" };
         forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
@@ -49,6 +75,84 @@ else
             TemperatureC = Random.Shared.Next(-20, 55),
             Summary = summaries[Random.Shared.Next(summaries.Length)]
         }).ToArray();
+    }
+
+    private async Task GetCachedLocation()
+    {
+        try
+        {
+            Location? location = await Geolocation.Default.GetLastKnownLocationAsync();
+
+            if (location != null)
+            {
+                currLocation = location;
+                // return $"Latitude: {location.Latitude}, Longitude: {location.Longitude}, Altitude: {location.Altitude}";
+            }
+            await GetCurrentLocation();
+
+        }
+        catch (FeatureNotSupportedException ex)
+        {
+            // Handle not supported on device exception
+            throw new ArgumentException("Location is not supported.", ex);
+        }
+        catch (FeatureNotEnabledException ex)
+        {
+            // Handle not enabled on device exception
+            throw new ArgumentException("Location is not enabled.", ex);
+        }
+        catch (PermissionException ex)
+        {
+            // Handle permission exception
+            throw new ArgumentException("Permission to access location was not provided.", ex);
+        }
+        catch (Exception ex)
+        {
+            // Unable to get location
+            throw new ArgumentException("Failed to get devices location.", ex);
+        }
+
+        // return "None";
+        return;
+    }
+
+    private async Task GetCurrentLocation()
+    {
+        try
+        {
+            _isCheckingLocation = true;
+            GeolocationRequest request = new GeolocationRequest(GeolocationAccuracy.Default, TimeSpan.FromSeconds(10));
+#if IOS
+            request.RequestFullAccuracy = true;
+#endif
+            _cancelTokenSource = new CancellationTokenSource();
+            Location? location = await Geolocation.Default.GetLocationAsync(request, _cancelTokenSource.Token);
+
+            if (location != null)
+            {
+                currLocation = location;
+                Debug.WriteLine($"Latitude: {location.Latitude}, Longitude: {location.Longitude}, Altitude: {location.Altitude}");
+            }
+        }
+        // Catch one of the following exceptions:
+        //   FeatureNotSupportedException
+        //   FeatureNotEnabledException
+        //   PermissionException
+        catch (Exception ex)
+        {
+                // Unable to get location
+            throw new ArgumentException("Failed to get devices location.", ex);
+        }
+        finally
+        {
+            _isCheckingLocation = false;
+        }
+    }
+
+    private void CancelRequest()
+    {
+        if (_isCheckingLocation && _cancelTokenSource != null && _cancelTokenSource.IsCancellationRequested == false)
+            _cancelTokenSource.Cancel();
     }
 
     private class WeatherForecast
