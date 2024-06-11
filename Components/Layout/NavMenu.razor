@@ -1,0 +1,47 @@
+﻿
+@code {   
+    // private bool navMenuCollapsed = DeviceDisplay.Current.MainDisplayInfo.Width / DeviceDisplay.Current.MainDisplayInfo.Density <= 641 ? true : false;
+    private bool navMenuCollapsed = true;
+    private string? NavMenuCssClass => navMenuCollapsed ? "collapsed" : null;
+    
+    private void ToggleNavMenu()
+    {
+        navMenuCollapsed = !navMenuCollapsed;
+    }
+    // <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+    // <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+}
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">MauiBlazorHybrid</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link px-2" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link px-2" href="counter">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link px-2" href="weather">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+            </NavLink>
+        </div>
+        <!-- <div class="nav-item px-3">
+            <NavLink class="nav-link" href="todo">
+                <span class="bi oi-list-rich-nav-menu" aria-hidden="true"></span> Todo List
+            </NavLink> 
+        </div> -->
+    </nav>
+</div>

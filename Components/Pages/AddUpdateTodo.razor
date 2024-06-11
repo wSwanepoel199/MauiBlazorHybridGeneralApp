@@ -1,0 +1,42 @@
+﻿@inject ITodoService TodoService
+
+@code {
+    private string todoTitle = "";
+    private string todoDesc = "";
+
+    private async void AddTodoRecord()
+    {
+
+        var response = await TodoService.AddTodo(new Todo {
+            Title = todoTitle, 
+            Description = todoDesc
+        });
+
+        if (response >0)
+        {
+            todoTitle = todoDesc = "";
+            this.StateHasChanged();
+            await App.Current.MainPage.DisplayAlert("Todo Added", "The Todo was successfully added", "CLOSE");
+        }
+        else
+        {
+            await App.Current.MainPage.DisplayAlert("Todo Failed", "Failed to add the Todo", "CLOSE");
+        }
+
+    }
+}
+
+<h3>AddUpdateTodo</h3>
+
+<div class="form-group">
+    <label>Task</label>
+    <input class="form-control" placeholder="Something To Do" @bind="todoTitle">
+</div>
+<div class="mt-2 form-group">
+    <label>Task Description</label>
+    <input class="form-control" placeholder="Description of Task" @bind="todoDesc">
+</div>
+
+
+<button type="submit" class="mt-2 btn btn-primary" @onclick="AddTodoRecord">Add/Edit Todo</button>
+

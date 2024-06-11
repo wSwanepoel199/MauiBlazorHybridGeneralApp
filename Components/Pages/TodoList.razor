@@ -1,0 +1,163 @@
+﻿@page "/todo"
+@inject ITodoService TodoService
+@code {
+    private List<Todo>? todos;
+    private string todoTitle = "";
+    private string todoDesc = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(500);
+
+        todos = await TodoService.GetAllTodo();
+        if (todos.Count() > 0)
+        {
+            this.StateHasChanged();
+        }
+    }
+
+    private async void AddTodoRecord()
+    {
+
+        var response = await TodoService.AddTodo(new Todo
+            {
+                Title = todoTitle,
+                Description = todoDesc
+            });
+
+        if (response > 0)
+        {
+            todoTitle = todoDesc = "";
+            await OnInitializedAsync();
+            // this.StateHasChanged();
+        }
+        else
+        {
+            await App.Current.MainPage.DisplayAlert("Todo Failed", "Failed to add the Todo", "CLOSE");
+        }
+
+    }
+
+    private async void UpdateTodo(Todo todo)
+    {
+        Debug.WriteLine($"Updating {todo.Id}");
+        var response = await TodoService.UpdateTodo(todo);
+        if (response > 0)
+        {
+            await OnInitializedAsync();
+        }
+        // this.StateHasChanged();
+    }
+
+
+    private async void RemoveTodo(Todo todo)
+    {
+        Debug.WriteLine($"Deleting {todo.Id}");
+        todos.Remove(todo);
+        var response = await TodoService.DeleteTodo(todo);
+        if (response > 0)
+        {
+            await OnInitializedAsync();
+        }
+        // this.StateHasChanged();
+    }
+
+    private void ToggleTodoDone(Todo todo)
+    {
+        Debug.WriteLine($"Todo with {todo.Id} is Done");
+        todo.IsDone = !todo.IsDone;
+        UpdateTodo(todo);
+    }
+
+    private void ToggleTodoHide(Todo todo)
+    {
+        Debug.WriteLine($"Hiding {todo.Id}");
+        todo.IsHidden = !todo.IsHidden;
+        UpdateTodo(todo);
+    }
+
+    private string TodoIsHidden(Todo todo)
+    {
+        return todo.IsHidden ? "hidden" : "visible";
+    }
+}
+
+<h1>TodoList</h1>
+
+@if (todos == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div>
+        <form class="form-inline">
+            <div class="form-group">
+                <label for="todoTitleInput">Task</label>
+                <input id="todoTitleInput" class="form-control" placeholder="Something To Do" @bind="todoTitle">
+            </div>
+            <div class="mt-2 form-group">
+                <label for="todoDescInput">Task Description</label>
+                <input id="todoDescInput" class="form-control" placeholder="Description of Task" @bind="todoDesc">
+            </div>
+        </form>
+
+
+        <button type="submit" class="mt-2 btn btn-primary" @onclick="AddTodoRecord">Add/Edit Todo</button>
+    </div>
+    <div>
+        <p style="margin-top: 1rem; margin-bottom:0.5rem;">You`ve done @todos.Count(todo => todo.IsDone && !todo.IsHidden) out of @todos.Count(todo => !todo.IsHidden)</p>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <colgroup><col /><col /><col /></colgroup>
+            <thead>
+                <tr>
+                    <th scope="col" class="text-center">
+                        Done
+                    </th>
+                    <th scope="col">
+                        Task
+                    </th>
+                    <th scope="col">
+                        Description
+                    </th>
+                    <th scope="col" class="text-center">
+                        Options
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var todo in todos)
+                {
+                    <tr class="@TodoIsHidden(todo)">
+                        <td scope="row" class="center-content">
+                            <input type="checkbox" @bind="todo.IsDone" @onclick="() => ToggleTodoDone(todo)" />
+                        </td>
+                        <td scope="row" class="table-text">
+                            @(todo.Title)
+                        </td>
+                        <td scope="row" class="table-text">
+                            @(todo.Description)
+                        </td>
+                        <td scope="row" class="center-content">
+                            <button title="Hide Todo" @onclick="()=>ToggleTodoHide(todo)" class="btn">
+                                @if (todo.IsHidden)
+                                {
+                                    <Icon Name="IconName.EyeSlashFill" Color="IconColor.Light"></Icon>
+                                }
+                                @if (!todo.IsHidden)
+                                {
+                                    <Icon Name="IconName.EyeFill" Color="IconColor.Light"></Icon>
+                                }
+                            </button>
+                            <button title="Remove Todo" @onclick="()=>RemoveTodo(todo)" class="btn">
+                                <Icon Name="IconName.Trash" Color="IconColor.Light"></Icon>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
