@@ -4,7 +4,7 @@
 
 <p>This component demonstrates showing data.</p>
 
-@if (forecasts == null && _isCheckingLocation == true)
+@if (forecasts == null || _isCheckingLocation == true)
 {
     <p><em>Loading...</em></p>
 }
@@ -18,9 +18,31 @@ else
     }
     if (location != null)
     {
-        <pre>
-            @(location)
+        <pre style="display:none">
+            @(location["forecast"])
         </pre>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Temp. (C)</th>
+                    <th>Temp. (F)</th>
+                    <th>Summary</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var forecast in location["forecast"]["forecastday"].AsArray())
+                {
+                    var date = DateTimeOffset.FromUnixTimeSeconds((long)forecast["date_epoch"]);
+                    <tr>
+                        <td>@date.Day/@date.Month/@date.Year</td>
+                        <td>@forecast["day"]["mintemp_c"]-@forecast["day"]["maxtemp_c"]</td>
+                        <td>@forecast["day"]["mintemp_f"]-@forecast["day"]["maxtemp_f"]</td>
+                        <td><img src=@forecast["day"]["condition"]["icon"] />@forecast["day"]["condition"]["text"]</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     }
     if (forecasts != null)
     {
@@ -51,10 +73,10 @@ else
 @code {
     private WeatherForecast[]? forecasts;
     private CancellationTokenSource? _cancelTokenSource;
-    private bool _isCheckingLocation;
+    private bool _isCheckingLocation = true;
     private Location? currLocation;
     static HttpClient client = new HttpClient();
-    private string? location;
+    private System.Text.Json.Nodes.JsonObject? location;
 
     protected override async Task OnInitializedAsync()
     {
@@ -63,8 +85,8 @@ else
         if (currLocation != null)
         {
             HttpResponseMessage response = await client.GetAsync($"http://api.weatherapi.com/v1/forecast.json?key=8aee07ed794b48a5bf813829241106&q={currLocation.Latitude},{currLocation.Longitude}&days=5");
-            location = await response.Content.ReadAsStringAsync();
-            Debug.Write(location);
+            location = await response.Content.ReadFromJsonAsync<System.Text.Json.Nodes.JsonObject>();
+            // Console.WriteLine(await location["location"]);
         }
         await Task.Delay(500);
         var startDate = DateOnly.FromDateTime(DateTime.Now);
@@ -120,7 +142,6 @@ else
     {
         try
         {
-            _isCheckingLocation = true;
             GeolocationRequest request = new GeolocationRequest(GeolocationAccuracy.Default, TimeSpan.FromSeconds(10));
 #if IOS
             request.RequestFullAccuracy = true;
