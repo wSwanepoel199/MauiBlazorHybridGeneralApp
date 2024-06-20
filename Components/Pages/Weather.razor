@@ -4,7 +4,7 @@
 
 <p>This component demonstrates showing data.</p>
 
-@if (forecasts == null || _isCheckingLocation == true)
+@if (_isCheckingLocation == true)
 {
     <p><em>Loading...</em></p>
 }
@@ -16,7 +16,7 @@ else
             @currLocation
         </p>
     }
-    if (location != null)
+    if (location != null && location.ContainsKey("forecast"))
     {
         <pre style="display:none">
             @(location["forecast"])
@@ -33,37 +33,16 @@ else
             <tbody>
                 @foreach (var forecast in location["forecast"]["forecastday"].AsArray())
                 {
-                    var date = DateTimeOffset.FromUnixTimeSeconds((long)forecast["date_epoch"]);
-                    <tr>
-                        <td>@date.Day/@date.Month/@date.Year</td>
-                        <td>@forecast["day"]["mintemp_c"]-@forecast["day"]["maxtemp_c"]</td>
-                        <td>@forecast["day"]["mintemp_f"]-@forecast["day"]["maxtemp_f"]</td>
-                        <td><img src=@forecast["day"]["condition"]["icon"] />@forecast["day"]["condition"]["text"]</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-    if (forecasts != null)
-    {
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Temp. (C)</th>
-                    <th>Temp. (F)</th>
-                    <th>Summary</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var forecast in forecasts)
-                {
-                    <tr>
-                        <td>@forecast.Date.ToShortDateString()</td>
-                        <td>@forecast.TemperatureC</td>
-                        <td>@forecast.TemperatureF</td>
-                        <td>@forecast.Summary</td>
-                    </tr>
+                    if(forecast != null)
+                    {
+                        var date = DateTimeOffset.FromUnixTimeSeconds((long)forecast["date_epoch"]);
+                        <tr>
+                            <td>@date.Day/@date.Month/@date.Year</td>
+                            <td>@forecast["day"]["mintemp_c"]-@forecast["day"]["maxtemp_c"]</td>
+                            <td>@forecast["day"]["mintemp_f"]-@forecast["day"]["maxtemp_f"]</td>
+                            <td><img src=@forecast["day"]["condition"]["icon"] />@forecast["day"]["condition"]["text"]</td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>
@@ -71,7 +50,6 @@ else
 }
 
 @code {
-    private WeatherForecast[]? forecasts;
     private CancellationTokenSource? _cancelTokenSource;
     private bool _isCheckingLocation = true;
     private Location? currLocation;
@@ -88,15 +66,7 @@ else
             location = await response.Content.ReadFromJsonAsync<System.Text.Json.Nodes.JsonObject>();
             // Console.WriteLine(await location["location"]);
         }
-        await Task.Delay(500);
-        var startDate = DateOnly.FromDateTime(DateTime.Now);
-        var summaries = new[] { "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching" };
-        forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
-        {
-            Date = startDate.AddDays(index),
-            TemperatureC = Random.Shared.Next(-20, 55),
-            Summary = summaries[Random.Shared.Next(summaries.Length)]
-        }).ToArray();
+        // await Task.Delay(500);
     }
 
     private async Task GetCachedLocation()
@@ -174,13 +144,5 @@ else
     {
         if (_isCheckingLocation && _cancelTokenSource != null && _cancelTokenSource.IsCancellationRequested == false)
             _cancelTokenSource.Cancel();
-    }
-
-    private class WeatherForecast
-    {
-        public DateOnly Date { get; set; }
-        public int TemperatureC { get; set; }
-        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-        public string? Summary { get; set; }
     }
 }
