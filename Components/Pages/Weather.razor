@@ -88,22 +88,22 @@ else
         catch (FeatureNotSupportedException ex)
         {
             // Handle not supported on device exception
-            throw new ArgumentException("Location is not supported.", ex);
+            throw new FeatureNotSupportedException("Location is not supported.", ex);
         }
         catch (FeatureNotEnabledException ex)
         {
             // Handle not enabled on device exception
-            throw new ArgumentException("Location is not enabled.", ex);
+            throw new FeatureNotEnabledException("Location is not enabled.", ex);
         }
         catch (PermissionException ex)
         {
             // Handle permission exception
-            throw new ArgumentException("Permission to access location was not provided.", ex);
+            throw new PermissionException("Permission to access location was not provided.");
         }
         catch (Exception ex)
         {
             // Unable to get location
-            throw new ArgumentException("Failed to get devices location.", ex);
+            throw new Exception("Failed to get devices location.", ex);
         }
 
         // return "None";
