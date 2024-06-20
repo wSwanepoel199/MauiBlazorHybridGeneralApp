@@ -10,24 +10,22 @@
 }
 else 
 {
-    if (currLocation != null)
-    {
-        <p>
-            @currLocation
-        </p>
-    }
     if (location != null && location.ContainsKey("forecast"))
     {
+        var forecasts = location["forecast"];
         <pre style="display:none">
-            @(location["forecast"])
+            @(forecasts)
         </pre>
         <table class="table">
+            <colgroup><col /><col /><col /><col /><col /><col /></colgroup>
             <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Temp. (C)</th>
-                    <th>Temp. (F)</th>
-                    <th>Summary</th>
+                    <th scope="col" class="text-center">Date</th>
+                    <th scope="col" class="text-center">Min Temp. (C)</th>
+                    <th scope="col" class="text-center">Max Temp. (C)</th>
+                    <th scope="col" class="text-center">Min Temp. (F)</th>
+                    <th scope="col" class="text-center">Max Temp. (F)</th>
+                    <th scope="col">Summary</th>
                 </tr>
             </thead>
             <tbody>
@@ -37,10 +35,12 @@ else
                     {
                         var date = DateTimeOffset.FromUnixTimeSeconds((long)forecast["date_epoch"]);
                         <tr>
-                            <td>@date.Day/@date.Month/@date.Year</td>
-                            <td>@forecast["day"]["mintemp_c"]-@forecast["day"]["maxtemp_c"]</td>
-                            <td>@forecast["day"]["mintemp_f"]-@forecast["day"]["maxtemp_f"]</td>
-                            <td><img src=@forecast["day"]["condition"]["icon"] />@forecast["day"]["condition"]["text"]</td>
+                            <td scope="row" class="text-center">@date.Day/@date.Month/@date.Year</td>
+                            <td scope="row" class="text-center">@forecast["day"]["mintemp_c"]</td>
+                            <td scope="row" class="text-center">@forecast["day"]["maxtemp_c"]</td>
+                            <td scope="row" class="text-center">@forecast["day"]["mintemp_f"]</td>
+                            <td scope="row" class="text-center">@forecast["day"]["maxtemp_c"]</td>
+                            <td scope="row" class="table-text">Weather:<img src=@forecast["day"]["condition"]["icon"] width="25" />, Humidity: @forecast["day"]["avghumidity"]%, UV Index: @forecast["day"]["uv"]</td>
                         </tr>
                     }
                 }
@@ -62,7 +62,7 @@ else
         await GetCachedLocation();
         if (currLocation != null)
         {
-            HttpResponseMessage response = await client.GetAsync($"http://api.weatherapi.com/v1/forecast.json?key=8aee07ed794b48a5bf813829241106&q={currLocation.Latitude},{currLocation.Longitude}&days=5");
+            HttpResponseMessage response = await client.GetAsync($"http://api.weatherapi.com/v1/forecast.json?key=8aee07ed794b48a5bf813829241106&q={currLocation.Latitude},{currLocation.Longitude}&days=7");
             location = await response.Content.ReadFromJsonAsync<System.Text.Json.Nodes.JsonObject>();
             // Console.WriteLine(await location["location"]);
         }

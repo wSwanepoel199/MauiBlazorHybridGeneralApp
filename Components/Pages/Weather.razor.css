@@ -3,3 +3,64 @@
     word-wrap: break-word;
     word-break: keep-all;
 }
+
+thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+table {
+    overflow: scroll;
+}
+
+thead {
+    /*    position: sticky;
+    top: 0;*/
+    /*    z-index: 10;*/
+    box-sizing: border-box;
+    border-bottom: solid 2px #d8d8d8;
+    background-color: #3a0647;
+    color: white;
+}
+
+th {
+    padding: 10px;
+    width: fit-content;
+}
+
+td {
+    padding: 5px;
+    box-sizing: border-box;
+    border: solid 1px #d8d8d8;
+    border-left: 0;
+    border-right: 0;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.table-text {
+    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.center-content {
+    text-align: center;
+    vertical-align: middle;
+    /*    padding: 0.5rem;*/
+    width: 1rem;
+}
+
+tbody tr {
+    background-color: var(--table-bg-colour);
+    transition: filter 150ms ease-out;
+}
+
+    tbody tr:nth-child(2n) {
+        filter: opacity(100%) brightness(90%);
+    }
+
+    tbody tr:hover {
+        filter: opacity(100%) brightness(80%);
+    }
