@@ -15,6 +15,10 @@ namespace MauiBlazorHybrid
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 });
 
+            builder.Services.AddScoped(sp => new HttpClient
+            {
+                BaseAddress = new Uri(builder.Configuration["FrontendUrl"] ?? "https://localhost:5002")
+            });
             //builder.Services.AddSingleton<DataBaseController.LocalDbService>();
             builder.Services.AddSingleton<ITodoService, TodoService>();
             //builder.Services.AddTransient<MainPage>();

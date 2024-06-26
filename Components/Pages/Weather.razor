@@ -47,6 +47,10 @@ else
         </table>
         </div>
     }
+    if(weatherforecast.Count > 0)
+    {
+        @weatherforecast
+    }
 }
 
 @code {
@@ -54,7 +58,14 @@ else
     private bool _isCheckingLocation = true;
     private Location? currLocation;
     static HttpClient client = new HttpClient();
+    private JsonSerializerOptions serializerOptions = new JsonSerializerOptions
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true
+    };
     private System.Text.Json.Nodes.JsonObject? location;
+    public List<WeatherForecast> weatherforecast { get; private set; }
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -62,8 +73,16 @@ else
         await GetCachedLocation();
         if (currLocation != null)
         {
-            HttpResponseMessage response = await client.GetAsync($"http://api.weatherapi.com/v1/forecast.json?key=8aee07ed794b48a5bf813829241106&q={currLocation.Latitude},{currLocation.Longitude}&days=7");
-            location = await response.Content.ReadFromJsonAsync<System.Text.Json.Nodes.JsonObject>();
+            weatherforecast = new List<WeatherForecast>();
+
+            HttpResponseMessage response = await client.GetAsync($"http://api.weatherapi.com/v1/forecast.json?key=8aee07ed794b48a5bf813829241106&q={currLocation.Latitude},{currLocation.Longitude}&days=7&aqi=no&alerts=no");
+            if (response.IsSuccessStatusCode)
+            {
+                location = await response.Content.ReadFromJsonAsync<System.Text.Json.Nodes.JsonObject>();
+                string content = await response.Content.ReadAsStringAsync();
+                weatherforecast = JsonSerializer.Deserialize<List<WeatherForecast>>(content, serializerOptions);
+
+            }
             // Console.WriteLine(await location["location"]);
         }
         // await Task.Delay(500);
@@ -114,7 +133,7 @@ else
         {
             GeolocationRequest request = new GeolocationRequest(GeolocationAccuracy.Default, TimeSpan.FromSeconds(10));
 #if IOS
-            request.RequestFullAccuracy = true;
+    request.RequestFullAccuracy = true;
 #endif
             _cancelTokenSource = new CancellationTokenSource();
             Location? location = await Geolocation.Default.GetLocationAsync(request, _cancelTokenSource.Token);
@@ -131,7 +150,7 @@ else
         //   PermissionException
         catch (Exception ex)
         {
-                // Unable to get location
+            // Unable to get location
             throw new ArgumentException("Failed to get devices location.", ex);
         }
         finally
@@ -144,5 +163,12 @@ else
     {
         if (_isCheckingLocation && _cancelTokenSource != null && _cancelTokenSource.IsCancellationRequested == false)
             _cancelTokenSource.Cancel();
+    }
+
+    public class WeatherForecast
+    {
+        public dynamic? location { get; set; }
+        public dynamic? current { get; set; }
+        public dynamic? forecast { get; set; }
     }
 }
